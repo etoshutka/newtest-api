@@ -26,7 +26,7 @@ class User(Base):
     tg_id = Column(String, unique=True, index=True)
     username = Column(String)
     ref_link = Column(String, unique=True)
-    points = Column(Integer, default=0)  # New field for user points
+    points = Column(Integer, default=0)
 
 
 class Referral(Base):
@@ -69,6 +69,10 @@ class ReferralResponse(BaseModel):
 
 class UpdatePoints(BaseModel):
     points: int
+
+
+class ReferralLinkUpdate(BaseModel):
+    ref_link: str
 
 
 app = FastAPI()
@@ -150,6 +154,16 @@ def get_referral_link(tg_id: str, db: Session = Depends(get_db)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return {"referral_link": user.ref_link}
+
+
+@app.post("/users/{tg_id}/referral_link")
+def update_referral_link(tg_id: str, link_data: ReferralLinkUpdate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.tg_id == tg_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.ref_link = link_data.ref_link
+    db.commit()
+    return {"message": "Referral link updated successfully"}
 
 
 @app.get("/users/{tg_id}/points")
