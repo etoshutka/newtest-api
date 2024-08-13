@@ -1,6 +1,6 @@
 # main.py
 from typing import List
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
@@ -72,10 +72,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development. In production, specify concrete origins
+    allow_origins=["*"],  # В продакшене замените на конкретные домены
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,  # Кэширование предварительных запросов на 10 минут
 )
 
 # Dependency to get database session
@@ -96,6 +98,15 @@ def get_or_create_user(db: Session, tg_id: str, username: str):
         db.commit()
         db.refresh(user)
     return user
+
+# Middleware for logging
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"Received {request.method} request to {request.url}")
+    print(f"Headers: {request.headers}")
+    response = await call_next(request)
+    print(f"Responded with status {response.status_code}")
+    return response
 
 # API routes
 @app.post("/users/", response_model=UserResponse)
@@ -185,6 +196,10 @@ async def http_exception_handler(request, exc):
         status_code=exc.status_code,
         content={"message": exc.detail},
     )
+
+@app.options("/{full_path:path}")
+async def options_handler(request: Request):
+    return {}
 
 @app.get("/")
 def read_root():
