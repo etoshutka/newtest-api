@@ -78,14 +78,14 @@ class ReferralLinkUpdate(BaseModel):
 
 app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["https://192.168.0.106:5173", "https://*.ngrok-free.app"],  # Добавьте все нужные origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
 # Dependency to get database session
 def get_db():
     db = SessionLocal()
