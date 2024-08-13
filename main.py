@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
 load_dotenv()
@@ -77,7 +78,14 @@ class ReferralLinkUpdate(BaseModel):
 
 app = FastAPI()
 
-
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 # Dependency to get database session
 def get_db():
     db = SessionLocal()
