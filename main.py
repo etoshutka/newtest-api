@@ -194,18 +194,7 @@ async def http_exception_handler(request, exc):
         content={"message": exc.detail},
     )
 
-@app.options("/{full_path:path}")
-async def options_route(request: Request):
-    return JSONResponse(
-        status_code=200,
-        content={"message": "OK"},
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-    )
-
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Referral System API"}
+
