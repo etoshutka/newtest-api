@@ -1,5 +1,6 @@
 from typing import List
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, Response
+from fastapi.routing import APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
@@ -68,6 +69,7 @@ class ReferralLinkUpdate(BaseModel):
     ref_link: str
 
 app = FastAPI()
+router = APIRouter()
 
 # Настройка CORS
 app.add_middleware(
@@ -77,7 +79,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@router.options("/{full_path:path}")
+async def options_handler(response: Response):
+    response.headers["Allow"] = "GET, POST, OPTIONS"
+    return {"message": "OK"}
 
+
+
+
+app.include_router(router)
 # Dependency to get database session
 def get_db():
     db = SessionLocal()
@@ -96,6 +106,13 @@ def get_or_create_user(db: Session, tg_id: str, username: str):
         db.commit()
         db.refresh(user)
     return user
+
+@app.options("/{full_path:path}")
+async def options_handler(response: Response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+    return JSONResponse(status_code=200)
 
 # Middleware for logging
 @app.middleware("http")
