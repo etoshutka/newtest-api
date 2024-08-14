@@ -74,7 +74,7 @@ app = FastAPI()
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://192.168.0.106:5173"],  # В продакшене замените на конкретные домены
+    allow_origins=["https://etoshutka.github.io/newtest-tma/"],  # В продакшене замените на конкретные домены
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
