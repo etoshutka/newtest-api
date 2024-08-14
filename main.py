@@ -1,4 +1,3 @@
-# main.py
 from typing import List
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -70,14 +69,13 @@ class ReferralLinkUpdate(BaseModel):
 
 app = FastAPI()
 
+# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # В продакшене замените на конкретные домены
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=600,  # Кэширование предварительных запросов на 10 минут
 )
 
 # Dependency to get database session
@@ -191,15 +189,22 @@ def update_user_points(tg_id: str, update: UpdatePoints, db: Session = Depends(g
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
-    print(f"HTTP error occurred: {exc.status_code} - {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
         content={"message": exc.detail},
     )
 
 @app.options("/{full_path:path}")
-async def options_handler(request: Request):
-    return {}
+async def options_route(request: Request):
+    return JSONResponse(
+        status_code=200,
+        content={"message": "OK"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+    )
 
 @app.get("/")
 def read_root():
