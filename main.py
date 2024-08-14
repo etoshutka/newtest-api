@@ -26,11 +26,17 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    tg_id = Column(String, unique=True, index=True)
+    tg_id = Column(Integer, unique=True, index=True)
     username = Column(String)
     points = Column(Integer, default=0)
-    referrer_id = Column(String, ForeignKey("users.tg_id"), nullable=True)
-    referrals = relationship("User", backref="referrer", remote_side=[tg_id])
+
+
+class Referral(Base):
+    __tablename__ = "referrals"
+    id = Column(Integer, primary_key=True, index=True)
+    user_tg_id = Column(Integer, ForeignKey("users.tg_id"))
+    friend_tg_id = Column(Integer, ForeignKey("users.tg_id"))
+    date = Column(DateTime, default=datetime.utcnow)
 
 
 # Create tables
@@ -39,16 +45,19 @@ Base.metadata.create_all(bind=engine)
 
 # Pydantic models for request/response
 class UserCreate(BaseModel):
-    tg_id: str
+    tg_id: int
     username: str
-    referrer_id: str = None
 
 
 class UserResponse(BaseModel):
-    tg_id: str
+    tg_id: int
     username: str
     points: int
-    referrals: List[str]
+
+
+class ReferralCreate(BaseModel):
+    user_tg_id: int
+    friend_tg_id: int
 
 
 class ReferralResponse(BaseModel):
@@ -78,10 +87,10 @@ def get_db():
 
 
 # Helper function to get or create user
-def get_or_create_user(db: Session, tg_id: str, username: str, referrer_id: str = None):
+def get_or_create_user(db: Session, tg_id: int, username: str):
     user = db.query(User).filter(User.tg_id == tg_id).first()
     if not user:
-        user = User(tg_id=tg_id, username=username, referrer_id=referrer_id)
+        user = User(tg_id=tg_id, username=username)
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -91,36 +100,37 @@ def get_or_create_user(db: Session, tg_id: str, username: str, referrer_id: str 
 # API routes
 @app.post("/users/", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.tg_id == user.tg_id).first()
-    if existing_user:
-        return existing_user
-
-    new_user = get_or_create_user(db, user.tg_id, user.username, user.referrer_id)
-
-    if user.referrer_id:
-        referrer = db.query(User).filter(User.tg_id == user.referrer_id).first()
-        if referrer:
-            referrer.points += 100  # Add points to the referrer
-            db.commit()
-
-    return new_user
+    return get_or_create_user(db, user.tg_id, user.username)
 
 
-@app.get("/users/{tg_id}", response_model=UserResponse)
-def get_user(tg_id: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.tg_id == tg_id).first()
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+@app.post("/referrals/", response_model=ReferralResponse)
+def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
+    user = get_or_create_user(db, referral.user_tg_id, "")
+    friend = get_or_create_user(db, referral.friend_tg_id, "")
+
+    existing_referral = db.query(Referral).filter(
+        Referral.user_tg_id == referral.user_tg_id,
+        Referral.friend_tg_id == referral.friend_tg_id
+    ).first()
+
+    if not existing_referral:
+        new_referral = Referral(user_tg_id=referral.user_tg_id, friend_tg_id=referral.friend_tg_id)
+        db.add(new_referral)
+        friend.points += 100  # Add points to the referrer
+        db.commit()
+
+    return get_user_referrals(referral.friend_tg_id, db)
 
 
 @app.get("/users/{tg_id}/referrals", response_model=ReferralResponse)
-def get_user_referrals(tg_id: str, db: Session = Depends(get_db)):
+def get_user_referrals(tg_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.tg_id == tg_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    referrals = db.query(User).filter(User.referrer_id == user.tg_id).all()
+    referrals = db.query(User).join(Referral, Referral.user_tg_id == User.tg_id) \
+        .filter(Referral.friend_tg_id == tg_id).all()
+
     return {
         "referrer": user,
         "referrals": referrals
@@ -129,7 +139,7 @@ def get_user_referrals(tg_id: str, db: Session = Depends(get_db)):
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Telegram Mini App Referral System API"}
+    return {"message": "Welcome to the Telegram Web App Referral System API"}
 
 
 if __name__ == "__main__":
