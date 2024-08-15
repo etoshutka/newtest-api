@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from datetime import datetime
 import logging
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from database import get_db
 from models import Referral
@@ -41,25 +42,25 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def add_custom_headers(request: Request, call_next):
+async def add_cors_headers(request: Request, call_next):
     response = await call_next(request)
-    response.headers["ngrok-skip-browser-warning"] = "69420"
-    response.headers["Access-Control-Allow-Origin"] = "https://etoshutka.github.io"
+    response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Credentials"] = "true"
-    logger.info(f"Response headers: {dict(response.headers)}")
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
     return response
-
-@app.middleware("http")
-async def log_headers(request: Request, call_next):
-    response = await call_next(request)
-    logger.info(f"Response headers: {dict(response.headers)}")
-    return response
-
 
 @app.options("/{full_path:path}")
 async def options_handler(request: Request):
-    return {"message": "OK"}  # Возвращаем осмысленный ответ для OPTIONS запросов
-
+    return JSONResponse(
+        content="OK",
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+        },
+    )
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
     logger.info(f"Attempting to create referral: {referral}")
