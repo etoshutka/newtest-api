@@ -9,6 +9,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 
 # Load environment variables
 load_dotenv()
@@ -94,7 +95,15 @@ def get_user_points(tg_id: int, db: Session = Depends(get_db)):
     referrals = db.query(Referral).filter(Referral.user_tg_id == tg_id).all()
     total_points = sum(referral.points for referral in referrals)
     return {"total_points": total_points}
-
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - Swagger UI",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js",
+        swagger_css_url="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css",
+    )
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
