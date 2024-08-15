@@ -34,33 +34,33 @@ app = FastAPI(version="2.0.0")
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["github.io", "https://etoshutka.github.io", "https://etoshutka.github.io/newtest-tma2/", "https://*.ngrok-free.app"],
+    allow_origins=["https://github.io", "https://etoshutka.github.io", "https://etoshutka.github.io/newtest-tma2/", "https://*.ngrok-free.app"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["ngrok-skip-browser-warning", "Content-Type"],
+    expose_headers=["ngrok-skip-browser-warning", "Content-Type"],
 )
 
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "https://etoshutka.github.io"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    return response
-
-@app.options("/{full_path:path}")
-async def options_handler(request: Request):
-    return JSONResponse(
-        content="OK",
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": "https://etoshutka.github.io",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-        },
-    )
+# @app.middleware("http")
+# async def add_cors_headers(request: Request, call_next):
+#     response = await call_next(request)
+#     response.headers["Access-Control-Allow-Origin"] = "https://etoshutka.github.io"
+#     response.headers["Access-Control-Allow-Credentials"] = "true"
+#     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT"
+#     response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+#     return response
+#
+# @app.options("/{full_path:path}")
+# async def options_handler(request: Request):
+#     return JSONResponse(
+#         content="OK",
+#         status_code=200,
+#         headers={
+#             "Access-Control-Allow-Origin": "https://etoshutka.github.io",
+#             "Access-Control-Allow-Methods": "GET, POST, PUT",
+#             "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+#         },
+#     )
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
     logger.info(f"Attempting to create referral: {referral}")
