@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import datetime
@@ -38,6 +38,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def log_headers(request: Request, call_next):
+    response = await call_next(request)
+    logger.info(f"Response headers: {dict(response.headers)}")
+    return response
+
+
+@app.options("/{full_path:path}")
+async def options_handler(request: Request):
+    return {}  # Пустой ответ для OPTIONS запросов
 
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
