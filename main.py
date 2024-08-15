@@ -1,40 +1,17 @@
 from typing import List
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, Column, Integer, DateTime, ForeignKey
-from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
 from datetime import datetime
-import os
-from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
 import logging
+from fastapi.middleware.cors import CORSMiddleware
+
+from database import get_db
+from models import Referral
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
-
-# Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-# Database model
-class Referral(Base):
-    __tablename__ = "referrals"
-    id = Column(Integer, primary_key=True, index=True)
-    user_tg_id = Column(Integer, index=True)
-    friend_tg_id = Column(Integer, index=True)
-    date = Column(DateTime, default=datetime.utcnow)
-    points = Column(Integer, default=100)
-
-# Create tables
-Base.metadata.create_all(bind=engine)
 
 # Pydantic models for request/response
 class ReferralCreate(BaseModel):
@@ -61,14 +38,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Dependency to get database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
