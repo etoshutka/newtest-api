@@ -33,7 +33,7 @@ app = FastAPI(version="2.0.0")
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://etoshutka.github.io/newtest-tma2/", "https://*.ngrok-free.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
