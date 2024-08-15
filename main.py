@@ -58,7 +58,7 @@ async def log_headers(request: Request, call_next):
 
 @app.options("/{full_path:path}")
 async def options_handler(request: Request):
-    return {}  # Пустой ответ для OPTIONS запросов
+    return {"message": "OK"}  # Возвращаем осмысленный ответ для OPTIONS запросов
 
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
