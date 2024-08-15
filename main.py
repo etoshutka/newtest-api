@@ -9,7 +9,11 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.docs import get_swagger_ui_html
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -47,7 +51,7 @@ class ReferralResponse(BaseModel):
     class Config:
         orm_mode = True
 
-app = FastAPI()
+app = FastAPI(version="2.0.0")
 
 # CORS setup
 app.add_middleware(
@@ -68,42 +72,52 @@ def get_db():
 
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
+    logger.info(f"Attempting to create referral: {referral}")
     existing_referral = db.query(Referral).filter(
         Referral.user_tg_id == referral.user_tg_id,
         Referral.friend_tg_id == referral.friend_tg_id
     ).first()
 
     if existing_referral:
+        logger.info(f"Existing referral found: {existing_referral}")
         return existing_referral
 
     new_referral = Referral(user_tg_id=referral.user_tg_id, friend_tg_id=referral.friend_tg_id)
-    db.add(new_referral)
-    db.commit()
-    db.refresh(new_referral)
-
-    return new_referral
+    try:
+        db.add(new_referral)
+        db.commit()
+        db.refresh(new_referral)
+        logger.info(f"New referral created successfully: {new_referral}")
+        return new_referral
+    except Exception as e:
+        logger.error(f"Error creating referral: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to create referral")
 
 @app.get("/referrals/{tg_id}", response_model=List[ReferralResponse])
 def get_referrals(tg_id: int, db: Session = Depends(get_db)):
+    logger.info(f"Fetching referrals for tg_id: {tg_id}")
     referrals = db.query(Referral).filter(
         (Referral.user_tg_id == tg_id) | (Referral.friend_tg_id == tg_id)
     ).all()
+    logger.info(f"Found {len(referrals)} referrals for tg_id: {tg_id}")
     return referrals
 
 @app.get("/referrals/{tg_id}/points")
 def get_user_points(tg_id: int, db: Session = Depends(get_db)):
+    logger.info(f"Calculating points for tg_id: {tg_id}")
     referrals = db.query(Referral).filter(Referral.user_tg_id == tg_id).all()
     total_points = sum(referral.points for referral in referrals)
+    logger.info(f"Total points for tg_id {tg_id}: {total_points}")
     return {"total_points": total_points}
-@app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-        title=app.title + " - Swagger UI",
-        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
-        swagger_js_url="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js",
-        swagger_css_url="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css",
-    )
+
+@app.get("/debug-info")
+def debug_info():
+    return {
+        "app_version": "2.0.0",
+        "endpoints": [{"path": route.path, "methods": route.methods} for route in app.routes]
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
