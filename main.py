@@ -33,11 +33,21 @@ app = FastAPI(version="2.0.0")
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://etoshutka.github.io/newtest-tma"],
+    allow_origins=["https://etoshutka.github.io", "https://etoshutka.github.io/newtest-tma2"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_custom_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["ngrok-skip-browser-warning"] = "69420"
+    response.headers["Access-Control-Allow-Origin"] = "https://etoshutka.github.io"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    logger.info(f"Response headers: {dict(response.headers)}")
+    return response
 
 @app.middleware("http")
 async def log_headers(request: Request, call_next):
