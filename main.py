@@ -51,7 +51,7 @@ app = FastAPI()
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://etoshutka.github.io"],
+    allow_origins=["https://etoshutka.github.io/newtest-tma"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
