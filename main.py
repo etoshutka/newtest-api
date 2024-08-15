@@ -114,10 +114,5 @@ def get_user_points(tg_id: int, db: Session = Depends(get_db)):
 @app.get("/debug-info")
 def debug_info():
     return {
-        "app_version": "2.0.0",
         "endpoints": [{"path": route.path, "methods": route.methods} for route in app.routes]
     }
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
