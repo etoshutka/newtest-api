@@ -50,7 +50,7 @@ app.add_middleware(
 #     response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
 #     return response
 
-@app.options("/referrals")
+@app.options("/referrals/")
 async def options_handler(request: Request):
     return JSONResponse(
         content="OK",
