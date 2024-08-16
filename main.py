@@ -49,18 +49,18 @@ app.add_middleware(
 #     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT"
 #     response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
 #     return response
-#
-# @app.options("/{full_path:path}")
-# async def options_handler(request: Request):
-#     return JSONResponse(
-#         content="OK",
-#         status_code=200,
-#         headers={
-#             "Access-Control-Allow-Origin": "https://etoshutka.github.io",
-#             "Access-Control-Allow-Methods": "GET, POST, PUT",
-#             "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-#         },
-#     )
+
+@app.options("/referrals")
+async def options_handler(request: Request):
+    return JSONResponse(
+        content="OK",
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "https://etoshutka.github.io",
+            "Access-Control-Allow-Methods": "GET, POST, PUT",
+            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+        },
+    )
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
     logger.info(f"Attempting to create referral: {referral}")
