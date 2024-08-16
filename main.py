@@ -31,9 +31,9 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://etoshutka.github.io/newtest-tma2/"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*", "ngrok-skip-browser-warning"],
+    allow_credentials=True,
+    allow_methods=["GET", "PUT", "POST", "DELETE"],
+    allow_headers=["Content-Type", "ngrok-skip-browser-warning"],
 )
 
 
@@ -50,7 +50,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-@app.options("/referrals/{tg_id}")
+@app.options("/referrals/")
 async def options_handler(request: Request):
     logger.info(f"Handling OPTIONS request for path: {request.url.path}")
     logger.info(f"Request headers: {dict(request.headers)}")
