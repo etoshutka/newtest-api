@@ -52,6 +52,8 @@ async def log_requests(request: Request, call_next):
 
 @app.options("/{full_path:path}")
 async def options_handler(request: Request):
+    logger.info(f"Handling OPTIONS request for path: {request.url.path}")
+    logger.info(f"Request headers: {dict(request.headers)}")
     return JSONResponse(
         content="OK",
         status_code=200,
