@@ -26,44 +26,53 @@ class ReferralResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
 app = FastAPI()
+
+
+origins = [
+    "https://etoshutka.github.io/newtest-tma2/",
+    "https://etoshutka.github.io/",
+    "https://github.io/",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://etoshutka.github.io/newtest-tma2/"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "PUT", "POST", "DELETE"],
-    allow_headers=["Content-Type", "ngrok-skip-browser-warning"],
+    allow_headers=["Content-Type", "ngrok-skip-browser-warning", "Access-Control-Allow-Headers",
+                   "Access-Control-Allow-Origin"],
 )
 
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Received request: {request.method} {request.url}")
-    logger.info(f"Request headers: {dict(request.headers)}")
-
-    response = await call_next(request)
-
-    logger.info(f"Response status: {response.status_code}")
-    logger.info(f"Response headers: {dict(response.headers)}")
-
-    return response
-
-
-@app.options("/referrals/")
-async def options_handler(request: Request):
-    logger.info(f"Handling OPTIONS request for path: {request.url.path}")
-    logger.info(f"Request headers: {dict(request.headers)}")
-    return JSONResponse(
-        content="OK",
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": "https://etoshutka.github.io/newtest-tma2/",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, ngrok-skip-browser-warning",
-            "Access-Control-Allow-Credentials": "true",
-        },
-    )
+# @app.middleware("http")
+# async def log_requests(request: Request, call_next):
+#     logger.info(f"Received request: {request.method} {request.url}")
+#     logger.info(f"Request headers: {dict(request.headers)}")
+#
+#     response = await call_next(request)
+#
+#     logger.info(f"Response status: {response.status_code}")
+#     logger.info(f"Response headers: {dict(response.headers)}")
+#
+#     return response
+#
+#
+# @app.options("/referrals/")
+# async def options_handler(request: Request):
+#     logger.info(f"Handling OPTIONS request for path: {request.url.path}")
+#     logger.info(f"Request headers: {dict(request.headers)}")
+#     return JSONResponse(
+#         content="OK",
+#         status_code=200,
+#         headers={
+#             "Access-Control-Allow-Origin": "https://etoshutka.github.io/newtest-tma2/",
+#             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+#             "Access-Control-Allow-Headers": "Content-Type, Authorization, ngrok-skip-browser-warning",
+#             "Access-Control-Allow-Credentials": "true",
+#         },
+#     )
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
     logger.info(f"Attempting to create referral: {referral}")
