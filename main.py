@@ -50,7 +50,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-@app.options("/referrals/")
+@app.options("/referrals/{tg_id}")
 async def options_handler(request: Request):
     logger.info(f"Handling OPTIONS request for path: {request.url.path}")
     logger.info(f"Request headers: {dict(request.headers)}")
@@ -58,7 +58,7 @@ async def options_handler(request: Request):
         content="OK",
         status_code=200,
         headers={
-            "Access-Control-Allow-Origin": "https://etoshutka.github.io",
+            "Access-Control-Allow-Origin": "https://etoshutka.github.io/newtest-tma2/",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization, ngrok-skip-browser-warning",
             "Access-Control-Allow-Credentials": "true",
