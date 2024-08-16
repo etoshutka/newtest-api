@@ -50,7 +50,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-@app.options("/{full_path:path}")
+@app.options("/referrals/")
 async def options_handler(request: Request):
     logger.info(f"Handling OPTIONS request for path: {request.url.path}")
     logger.info(f"Request headers: {dict(request.headers)}")
