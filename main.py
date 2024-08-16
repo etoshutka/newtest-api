@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import datetime
@@ -25,7 +26,7 @@ class ReferralResponse(BaseModel):
     class Config:
         orm_mode = True
 
-app = FastAPI(version="2.0.0")
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +36,32 @@ app.add_middleware(
     allow_headers=["*", "ngrok-skip-browser-warning"],
 )
 
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Received request: {request.method} {request.url}")
+    logger.info(f"Request headers: {dict(request.headers)}")
+
+    response = await call_next(request)
+
+    logger.info(f"Response status: {response.status_code}")
+    logger.info(f"Response headers: {dict(response.headers)}")
+
+    return response
+
+
+@app.options("/{full_path:path}")
+async def options_handler(request: Request):
+    return JSONResponse(
+        content="OK",
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "https://etoshutka.github.io",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, ngrok-skip-browser-warning",
+            "Access-Control-Allow-Credentials": "true",
+        },
+    )
 @app.post("/referrals/", response_model=ReferralResponse)
 def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
     logger.info(f"Attempting to create referral: {referral}")
@@ -76,11 +103,3 @@ def get_user_points(tg_id: int, db: Session = Depends(get_db)):
     logger.info(f"Total points for tg_id {tg_id}: {total_points}")
     return {"total_points": total_points}
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Received request: {request.method} {request.url}")
-    logger.info(f"Request headers: {request.headers}")
-    response = await call_next(request)
-    logger.info(f"Response status: {response.status_code}")
-    logger.info(f"Response headers: {response.headers}")
-    return response
