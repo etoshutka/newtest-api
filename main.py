@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 class ReferralCreate(BaseModel):
     user_tg_id: int
     friend_tg_id: int
+    username: str = None
 
 class ReferralResponse(BaseModel):
     id: int
@@ -22,6 +23,7 @@ class ReferralResponse(BaseModel):
     friend_tg_id: int
     date: datetime
     points: int
+    username: str = None
 
     class Config:
         orm_mode = True
@@ -49,7 +51,10 @@ def create_referral(referral: ReferralCreate, db: Session = Depends(get_db)):
         logger.info(f"Existing referral found: {existing_referral}")
         return existing_referral
 
-    new_referral = Referral(user_tg_id=referral.user_tg_id, friend_tg_id=referral.friend_tg_id)
+    new_referral = Referral(user_tg_id=referral.user_tg_id,
+                            friend_tg_id=referral.friend_tg_id,
+                            username=referral.username
+                            )
     try:
         db.add(new_referral)
         db.commit()

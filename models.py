@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DateTime, BigInteger
+from sqlalchemy import Column, Integer, DateTime, BigInteger,String
 from sqlalchemy.sql import func
 from database import Base
 
@@ -11,3 +11,4 @@ class Referral(Base):
     friend_tg_id = Column(BigInteger, index=True)
     date = Column(DateTime, default=func.now())
     points = Column(Integer, default=100)
+    username = Column(String, nullable=True)
